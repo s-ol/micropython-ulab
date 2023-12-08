@@ -181,11 +181,11 @@ mp_obj_t ndarray_binary_add(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 
     if(lhs->dtype == NDARRAY_UINT8) {
         if(rhs->dtype == NDARRAY_UINT8) {
-            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT16);
-            BINARY_LOOP(results, uint16_t, uint8_t, uint8_t, larray, lstrides, rarray, rstrides, +);
+            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT8);
+            BINARY_LOOP(results, uint8_t, uint8_t, uint8_t, larray, lstrides, rarray, rstrides, +);
         } else if(rhs->dtype == NDARRAY_INT8) {
-            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT16);
-            BINARY_LOOP(results, int16_t, uint8_t, int8_t, larray, lstrides, rarray, rstrides, +);
+            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT8);
+            BINARY_LOOP(results, int8_t, uint8_t, int8_t, larray, lstrides, rarray, rstrides, +);
         } else if(rhs->dtype == NDARRAY_UINT16) {
             results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT16);
             BINARY_LOOP(results, uint16_t, uint8_t, uint16_t, larray, lstrides, rarray, rstrides, +);
@@ -264,11 +264,11 @@ mp_obj_t ndarray_binary_multiply(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
 
     if(lhs->dtype == NDARRAY_UINT8) {
         if(rhs->dtype == NDARRAY_UINT8) {
-            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT16);
-            BINARY_LOOP(results, uint16_t, uint8_t, uint8_t, larray, lstrides, rarray, rstrides, *);
+            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT8);
+            BINARY_LOOP(results, uint8_t, uint8_t, uint8_t, larray, lstrides, rarray, rstrides, *);
         } else if(rhs->dtype == NDARRAY_INT8) {
-            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT16);
-            BINARY_LOOP(results, int16_t, uint8_t, int8_t, larray, lstrides, rarray, rstrides, *);
+            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT8);
+            BINARY_LOOP(results, int8_t, uint8_t, int8_t, larray, lstrides, rarray, rstrides, *);
         } else if(rhs->dtype == NDARRAY_UINT16) {
             results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT16);
             BINARY_LOOP(results, uint16_t, uint8_t, uint16_t, larray, lstrides, rarray, rstrides, *);
@@ -495,8 +495,8 @@ mp_obj_t ndarray_binary_subtract(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
             results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT8);
             BINARY_LOOP(results, uint8_t, uint8_t, uint8_t, larray, lstrides, rarray, rstrides, -);
         } else if(rhs->dtype == NDARRAY_INT8) {
-            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT16);
-            BINARY_LOOP(results, int16_t, uint8_t, int8_t, larray, lstrides, rarray, rstrides, -);
+            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT8);
+            BINARY_LOOP(results, int8_t, uint8_t, int8_t, larray, lstrides, rarray, rstrides, -);
         } else if(rhs->dtype == NDARRAY_UINT16) {
             results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_UINT16);
             BINARY_LOOP(results, uint16_t, uint8_t, uint16_t, larray, lstrides, rarray, rstrides, -);
@@ -509,8 +509,8 @@ mp_obj_t ndarray_binary_subtract(ndarray_obj_t *lhs, ndarray_obj_t *rhs,
         }
     } else if(lhs->dtype == NDARRAY_INT8) {
         if(rhs->dtype == NDARRAY_UINT8) {
-            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT16);
-            BINARY_LOOP(results, int16_t, int8_t, uint8_t, larray, lstrides, rarray, rstrides, -);
+            results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT8);
+            BINARY_LOOP(results, int8_t, int8_t, uint8_t, larray, lstrides, rarray, rstrides, -);
         } else if(rhs->dtype == NDARRAY_INT8) {
             results = ndarray_new_dense_ndarray(ndim, shape, NDARRAY_INT8);
             BINARY_LOOP(results, int8_t, int8_t, int8_t, larray, lstrides, rarray, rstrides, -);
