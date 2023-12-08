@@ -1674,9 +1674,10 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
     // if the ndarray stands on the right hand side of the expression, simply swap the operands
     ndarray_obj_t *lhs, *rhs;
     mp_binary_op_t op = _op;
-    if((op == MP_BINARY_OP_REVERSE_ADD) || (op == MP_BINARY_OP_REVERSE_MULTIPLY) ||
-        (op == MP_BINARY_OP_REVERSE_POWER) || (op == MP_BINARY_OP_REVERSE_SUBTRACT) ||
-        (op == MP_BINARY_OP_REVERSE_TRUE_DIVIDE)) {
+    if((op == MP_BINARY_OP_REVERSE_ADD) || (op == MP_BINARY_OP_REVERSE_LSHIFT) ||
+        (op == MP_BINARY_OP_REVERSE_MODULO) || (op == MP_BINARY_OP_REVERSE_MULTIPLY) ||
+        (op == MP_BINARY_OP_REVERSE_POWER) || (op == MP_BINARY_OP_REVERSE_RSHIFT) ||
+        (op == MP_BINARY_OP_REVERSE_SUBTRACT) || (op == MP_BINARY_OP_REVERSE_TRUE_DIVIDE)) {
         lhs = ndarray_from_mp_obj(robj, 0);
         rhs = ndarray_from_mp_obj(lobj, lhs->dtype);
     } else {
@@ -1685,10 +1686,16 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
     }
     if(op == MP_BINARY_OP_REVERSE_ADD) {
         op = MP_BINARY_OP_ADD;
+    } else if(op == MP_BINARY_OP_REVERSE_LSHIFT) {
+        op = MP_BINARY_OP_LSHIFT;
+    } else if(op == MP_BINARY_OP_REVERSE_MODULO) {
+        op = MP_BINARY_OP_MODULO;
     } else if(op == MP_BINARY_OP_REVERSE_MULTIPLY) {
         op = MP_BINARY_OP_MULTIPLY;
     } else if(op == MP_BINARY_OP_REVERSE_POWER) {
         op = MP_BINARY_OP_POWER;
+    } else if(op == MP_BINARY_OP_REVERSE_RSHIFT) {
+        op = MP_BINARY_OP_RSHIFT;
     } else if(op == MP_BINARY_OP_REVERSE_SUBTRACT) {
         op = MP_BINARY_OP_SUBTRACT;
     } else if(op == MP_BINARY_OP_REVERSE_TRUE_DIVIDE) {
@@ -1700,7 +1707,9 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
     int32_t *lstrides = m_new0(int32_t, ULAB_MAX_DIMS);
     int32_t *rstrides = m_new0(int32_t, ULAB_MAX_DIMS);
     uint8_t broadcastable;
-    if((op == MP_BINARY_OP_INPLACE_ADD) || (op == MP_BINARY_OP_INPLACE_MULTIPLY) || (op == MP_BINARY_OP_INPLACE_POWER) ||
+    if((op == MP_BINARY_OP_INPLACE_ADD) || (op == MP_BINARY_OP_INPLACE_LSHIFT) ||
+        (op == MP_BINARY_OP_INPLACE_MODULO) || (op == MP_BINARY_OP_INPLACE_MULTIPLY) ||
+        (op == MP_BINARY_OP_INPLACE_POWER) || (op == MP_BINARY_OP_INPLACE_RSHIFT) ||
         (op == MP_BINARY_OP_INPLACE_SUBTRACT) || (op == MP_BINARY_OP_INPLACE_TRUE_DIVIDE)) {
         broadcastable = ndarray_can_broadcast_inplace(lhs, rhs, rstrides);
     } else {
@@ -1738,7 +1747,10 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
                 return MP_OBJ_FROM_PTR(ndarray_new_linear_array(0, dtype));
                 break;
 
+            case MP_BINARY_OP_INPLACE_LSHIFT:
+            case MP_BINARY_OP_INPLACE_MODULO:
             case MP_BINARY_OP_INPLACE_POWER:
+            case MP_BINARY_OP_INPLACE_RSHIFT:
             case MP_BINARY_OP_INPLACE_TRUE_DIVIDE:
             case MP_BINARY_OP_POWER:
             case MP_BINARY_OP_TRUE_DIVIDE:
@@ -1769,6 +1781,18 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
             return ndarray_inplace_ams(lhs, rhs, rstrides, op);
             break;
         #endif
+        #if NDARRAY_HAS_INPLACE_LSHIFT
+        case MP_BINARY_OP_INPLACE_LSHIFT:
+            COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
+            return ndarray_inplace_lmr(lhs, rhs, rstrides, op);
+            break;
+        #endif
+        #if NDARRAY_HAS_INPLACE_MODULO
+        case MP_BINARY_OP_INPLACE_MODULO:
+            COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
+            return ndarray_inplace_lmr(lhs, rhs, rstrides, op);
+            break;
+        #endif
         #if NDARRAY_HAS_INPLACE_MULTIPLY
         case MP_BINARY_OP_INPLACE_MULTIPLY:
             COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
@@ -1779,6 +1803,12 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
         case MP_BINARY_OP_INPLACE_POWER:
             COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
             return ndarray_inplace_power(lhs, rhs, rstrides);
+            break;
+        #endif
+        #if NDARRAY_HAS_INPLACE_RSHIFT
+        case MP_BINARY_OP_INPLACE_RSHIFT:
+            COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
+            return ndarray_inplace_lmr(lhs, rhs, rstrides, op);
             break;
         #endif
         #if NDARRAY_HAS_INPLACE_SUBTRACT
@@ -1824,6 +1854,18 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
             return ndarray_binary_add(lhs, rhs, ndim, shape, lstrides, rstrides);
             break;
         #endif
+        #if NDARRAY_HAS_BINARY_OP_LSHIFT
+        case MP_BINARY_OP_LSHIFT:
+            COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
+            return ndarray_binary_lshift(lhs, rhs, ndim, shape, lstrides, rstrides);
+            break;
+        #endif
+        #if NDARRAY_HAS_BINARY_OP_MODULO
+        case MP_BINARY_OP_MODULO:
+            COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
+            return ndarray_binary_modulo(lhs, rhs, ndim, shape, lstrides, rstrides);
+            break;
+        #endif
         #if NDARRAY_HAS_BINARY_OP_MULTIPLY
         case MP_BINARY_OP_MULTIPLY:
             return ndarray_binary_multiply(lhs, rhs, ndim, shape, lstrides, rstrides);
@@ -1839,6 +1881,12 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
         case MP_BINARY_OP_MORE_EQUAL:
             COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
             return ndarray_binary_more(lhs, rhs, ndim, shape, lstrides, rstrides, MP_BINARY_OP_MORE_EQUAL);
+            break;
+        #endif
+        #if NDARRAY_HAS_BINARY_OP_RSHIFT
+        case MP_BINARY_OP_RSHIFT:
+            COMPLEX_DTYPE_NOT_IMPLEMENTED(lhs->dtype);
+            return ndarray_binary_rshift(lhs, rhs, ndim, shape, lstrides, rstrides);
             break;
         #endif
         #if NDARRAY_HAS_BINARY_OP_SUBTRACT
