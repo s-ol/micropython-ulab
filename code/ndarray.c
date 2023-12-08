@@ -1197,6 +1197,88 @@ static mp_obj_t ndarray_from_boolean_index(ndarray_obj_t *ndarray, ndarray_obj_t
     return MP_OBJ_FROM_PTR(results);
 }
 
+static mp_obj_t ndarray_from_index(ndarray_obj_t *ndarray, ndarray_obj_t *index) {
+    if(index->boolean) {
+        return ndarray_from_boolean_index(ndarray, index);
+    }
+
+    if(ndarray->ndim > 1) {
+        mp_raise_ValueError(translate("only supports 1-dim target arrays"));
+    }
+
+    int32_t *strides = strides_from_shape(index->shape, ndarray->dtype);
+    ndarray_obj_t *results = ndarray_new_ndarray(index->ndim, index->shape, strides, ndarray->dtype);
+
+    uint8_t *larray = (uint8_t *)ndarray->array;
+    uint8_t *iarray = (uint8_t *)index->array;
+
+    if (ndarray->dtype == NDARRAY_UINT8) {
+      if (index->dtype == NDARRAY_UINT8) {
+          INDEX_LOOP(results, uint8_t, uint8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT8) {
+          INDEX_LOOP(results, uint8_t, int8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_UINT16) {
+          INDEX_LOOP(results, uint8_t, uint16_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT16) {
+          INDEX_LOOP(results, uint8_t, int16_t, larray, ndarray->strides, iarray, index->strides);
+      }
+    } else if (ndarray->dtype == NDARRAY_INT8) {
+      if (index->dtype == NDARRAY_UINT8) {
+          INDEX_LOOP(results, int8_t, uint8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT8) {
+          INDEX_LOOP(results, int8_t, int8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_UINT16) {
+          INDEX_LOOP(results, int8_t, uint16_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT16) {
+          INDEX_LOOP(results, int8_t, int16_t, larray, ndarray->strides, iarray, index->strides);
+      }
+    } else if (ndarray->dtype == NDARRAY_UINT16) {
+      if (index->dtype == NDARRAY_UINT8) {
+          INDEX_LOOP(results, uint16_t, uint8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT8) {
+          INDEX_LOOP(results, uint16_t, int8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_UINT16) {
+          INDEX_LOOP(results, uint16_t, uint16_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT16) {
+          INDEX_LOOP(results, uint16_t, int16_t, larray, ndarray->strides, iarray, index->strides);
+      }
+    } else if (ndarray->dtype == NDARRAY_INT16) {
+      if (index->dtype == NDARRAY_UINT8) {
+          INDEX_LOOP(results, int16_t, uint8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT8) {
+          INDEX_LOOP(results, int16_t, int8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_UINT16) {
+          INDEX_LOOP(results, int16_t, uint16_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT16) {
+          INDEX_LOOP(results, int16_t, int16_t, larray, ndarray->strides, iarray, index->strides);
+      }
+    } else if (ndarray->dtype == NDARRAY_FLOAT) {
+      if (index->dtype == NDARRAY_UINT8) {
+          INDEX_LOOP(results, mp_float_t, uint8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT8) {
+          INDEX_LOOP(results, mp_float_t, int8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_UINT16) {
+          INDEX_LOOP(results, mp_float_t, uint16_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT16) {
+          INDEX_LOOP(results, mp_float_t, int16_t, larray, ndarray->strides, iarray, index->strides);
+      }
+      /*
+    } else if (ndarray->dtype == NDARRAY_COMPLEX) {
+      if (index->dtype == NDARRAY_UINT8) {
+          INDEX_LOOP(results, int16_t, uint8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT8) {
+          INDEX_LOOP(results, int16_t, int8_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_UINT16) {
+          INDEX_LOOP(results, int16_t, uint16_t, larray, ndarray->strides, iarray, index->strides);
+      } else if (index->dtype == NDARRAY_INT16) {
+          INDEX_LOOP(results, int16_t, int16_t, larray, ndarray->strides, iarray, index->strides);
+      }
+      */
+    }
+
+    return MP_OBJ_FROM_PTR(results);
+}
+
 static mp_obj_t ndarray_assign_from_boolean_index(ndarray_obj_t *ndarray, ndarray_obj_t *index, ndarray_obj_t *values) {
     // assigns values to a Boolean-indexed array
     // first we have to find out how many trues there are
@@ -1313,12 +1395,22 @@ static mp_obj_t ndarray_assign_from_boolean_index(ndarray_obj_t *ndarray, ndarra
 static mp_obj_t ndarray_get_slice(ndarray_obj_t *ndarray, mp_obj_t index, ndarray_obj_t *values) {
     if(mp_obj_is_type(index, &ulab_ndarray_type)) {
         ndarray_obj_t *nindex = MP_OBJ_TO_PTR(index);
-        if((nindex->ndim > 1) || (nindex->boolean == false)) {
-            mp_raise_NotImplementedError(MP_ERROR_TEXT("operation is implemented for 1D Boolean arrays only"));
+
+        if(nindex->dtype == NDARRAY_FLOAT) {
+            mp_raise_NotImplementedError(translate("operation is implemented for 1D Boolean arrays only"));
         }
+        #if ULAB_SUPPORTS_COMPLEX
+        if(nindex->dtype == NDARRAY_COMPLEX) {
+            mp_raise_NotImplementedError(translate("operation is implemented for 1D Boolean arrays only"));
+        }
+        #endif
+
         if(values == NULL) { // return value(s)
-            return ndarray_from_boolean_index(ndarray, nindex);
+            return ndarray_from_index(ndarray, nindex);
         } else { // assign value(s)
+            if(!nindex->boolean || nindex->ndim > 1) {
+              mp_raise_NotImplementedError(translate("operation is implemented for 1D Boolean arrays only"));
+            }
             ndarray_assign_from_boolean_index(ndarray, nindex, values);
         }
     }
