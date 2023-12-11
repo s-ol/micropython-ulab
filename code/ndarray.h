@@ -353,6 +353,17 @@ ndarray_obj_t *ndarray_from_mp_obj(mp_obj_t , uint8_t );
 #else
 
 #if ULAB_MAX_DIMS == 1
+#define LOOP1_START(ndarray, ITER)\
+    uint8_t *ITER = (uint8_t *)ndarray->array;\
+    int32_t *(ITER ## _strides) = ndarray->strides;\
+    size_t l = 0;\
+    do {\
+
+#define LOOP1_END(shape, ndarray, ITER)\
+        ITER += (ITER ## _strides)[ULAB_MAX_DIMS - 1];\
+        l++;\
+    } while(l < (shape)[ULAB_MAX_DIMS - 1]);\
+
 #define BINARY_LOOP(results, type_out, type_left, type_right, larray, lstrides, rarray, rstrides, OPERATOR)\
     type_out *array = (type_out *)results->array;\
     size_t l = 0;\
@@ -405,6 +416,22 @@ ndarray_obj_t *ndarray_from_mp_obj(mp_obj_t , uint8_t );
 #endif /* ULAB_MAX_DIMS == 1 */
 
 #if ULAB_MAX_DIMS == 2
+#define LOOP1_START(ndarray, ITER)\
+    uint8_t *ITER = (uint8_t *)ndarray->array;\
+    int32_t *(ITER ## _strides) = ndarray->strides;\
+    size_t k = 0;\
+    do {\
+        size_t l = 0;\
+        do {\
+
+#define LOOP1_END(shape, ndarray, ITER)\
+            ITER += (ITER ## _strides)[ULAB_MAX_DIMS - 1];\
+            l++;\
+        } while(l < (shape)[ULAB_MAX_DIMS - 1]);\
+        ITER -= (ITER ## _strides)[ULAB_MAX_DIMS - 1] * (shape)[ULAB_MAX_DIMS-1];\
+        k++;\
+    } while(k < (shape)[ULAB_MAX_DIMS - 2]);\
+
 #define BINARY_LOOP(results, type_out, type_left, type_right, larray, lstrides, rarray, rstrides, OPERATOR)\
     type_out *array = (type_out *)(results)->array;\
     size_t k = 0;\
